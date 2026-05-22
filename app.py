@@ -1,14 +1,3 @@
-"""
-BenchMind — Optional HuggingFace Spaces backend for Llama 3.1 8B
-Deploy this to HF Spaces (Gradio SDK) for a fully self-hosted OSS endpoint.
-
-Instructions:
-1. Go to huggingface.co/spaces → New Space → Gradio SDK
-2. Paste this file as app.py
-3. Add requirements.txt with: transformers torch gradio accelerate
-4. Copy your Space URL and update HF_ENDPOINT in index.html
-"""
-
 import gradio as gr
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
