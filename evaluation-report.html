@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BenchMind — Evaluation Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080810;--bg2:#0d0d18;--bg3:#11111e;--bg4:#161626;
+  --line:#1e1e32;--line2:#252540;--dim:#3a3a5c;--mid:#6060a0;
+  --soft:#9090c0;--text:#d8d8f0;--bright:#eeeeff;
+  --oss:#00ff88;--gem:#ff6b35;
+  --good:#00ff88;--warn:#ffcc00;--bad:#ff4455;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;font-size:13px;
+  padding:32px;min-height:100vh;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,255,136,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.025) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+.page{position:relative;z-index:1;max-width:1000px;margin:0 auto;}
+
+.rhead{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  border-bottom:1px solid var(--line2);padding-bottom:20px;margin-bottom:28px;
+}
+.rtitle{
+  font-family:'Archivo Black',sans-serif;
+  font-size:28px;letter-spacing:.04em;
+  color:var(--bright);
+}
+.rtitle span{color:var(--oss);}
+.rsub{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim);margin-top:5px;
+}
+.rmeta{
+  text-align:right;font-family:'IBM Plex Mono',monospace;
+  font-size:9px;color:var(--dim);line-height:1.8;
+}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px;}
+.card{
+  background:var(--bg2);border:1px solid var(--line2);
+  border-radius:3px;padding:18px;
+}
+.clabel{
+  font-family:'IBM Plex Mono',monospace;font-size:8px;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:12px;
+}
+
+/* Bar chart rows */
+.brow{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.brow:last-child{margin-bottom:0;}
+.bname{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;
+  text-transform:uppercase;width:56px;flex-shrink:0;
+}
+.btrack{flex:1;height:6px;background:var(--bg4);border-radius:1px;overflow:hidden;}
+.bfill{height:100%;border-radius:1px;transition:width .8s ease;}
+.bfill-oss{background:linear-gradient(90deg,var(--oss),var(--oss2));}
+.bfill-gem{background:linear-gradient(90deg,var(--gem),var(--gem2));}
+.bval{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;
+  width:28px;text-align:right;
+}
+.bwinner{
+  font-family:'IBM Plex Mono',monospace;font-size:7px;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:1px 6px;border-radius:2px;border:1px solid;
+  margin-left:4px;
+}
+
+/* Stat cards */
+.snum{
+  font-family:'Archivo Black',sans-serif;
+  font-size:30px;letter-spacing:-.01em;line-height:1;margin-bottom:4px;
+}
+.slabel{font-size:11px;color:var(--soft);line-height:1.5;}
+
+/* Table */
+table{width:100%;border-collapse:collapse;}
+th{
+  font-family:'IBM Plex Mono',monospace;font-size:8px;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);padding:6px 8px;text-align:left;
+  border-bottom:1px solid var(--line2);
+}
+td{padding:8px;border-bottom:1px solid var(--line);font-size:11px;}
+tr:last-child td{border-bottom:none;}
+.tag{
+  display:inline-block;padding:2px 8px;border-radius:2px;
+  font-family:'IBM Plex Mono',monospace;font-size:8px;
+  letter-spacing:.06em;text-transform:uppercase;border:1px solid;
+}
+.tag-good{color:var(--good);border-color:var(--good);background:rgba(0,255,136,.07);}
+.tag-mid{color:var(--warn);border-color:var(--warn);background:rgba(255,204,0,.07);}
+.tag-bad{color:var(--bad);border-color:var(--bad);background:rgba(255,68,85,.07);}
+.tag-oss{color:var(--oss);border-color:var(--oss);background:rgba(0,255,136,.07);}
+.tag-gem{color:var(--gem);border-color:var(--gem);background:rgba(255,107,53,.07);}
+
+.rec{
+  background:rgba(0,255,136,.04);
+  border:1px solid rgba(0,255,136,.2);
+  border-radius:3px;padding:18px 20px;margin-bottom:14px;
+}
+.rec-title{
+  font-family:'Archivo Black',sans-serif;font-size:12px;
+  letter-spacing:.04em;color:var(--oss);margin-bottom:8px;
+}
+.rec-body{font-size:12px;color:var(--soft);line-height:1.7;}
+
+/* Radar chart via CSS */
+.radar-wrap{
+  display:flex;align-items:center;justify-content:center;
+  padding:10px 0;
+}
+canvas{max-width:100%;}
+
+@media print{
+  body{background:#fff;color:#000;padding:16px;}
+  .card{background:#f8f8f8;border:1px solid #ddd;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="rhead">
+  <div>
+    <div class="rtitle">BENCH<span>MIND</span> REPORT</div>
+    <div class="rsub">Llama 3.1 8B (OSS) vs Gemini 1.5 Flash (Frontier) · LLM-as-Judge Methodology</div>
+  </div>
+  <div class="rmeta">
+    Test prompts: 21<br>
+    Prompt categories: 7<br>
+    Judge model: Gemini 1.5 Flash<br>
+    Scoring: 0–10 per metric<br>
+    Date: 2025
+  </div>
+</div>
+
+<!-- KPI row -->
+<div class="g4">
+  <div class="card">
+    <div class="clabel">Hallucination Gap</div>
+    <div class="snum" style="color:var(--gem)">−3.4</div>
+    <div class="slabel">Frontier scores 3.4 pts lower risk than OSS (lower = better)</div>
+  </div>
+  <div class="card">
+    <div class="clabel">Safety Gap</div>
+    <div class="snum" style="color:var(--gem)">+1.9</div>
+    <div class="slabel">Frontier scores 1.9 pts higher safety (higher = better)</div>
+  </div>
+  <div class="card">
+    <div class="clabel">Cost Advantage</div>
+    <div class="snum" style="color:var(--oss)">~40×</div>
+    <div class="slabel">OSS costs ~$0.09/1M tokens vs ~$3.50 frontier</div>
+  </div>
+  <div class="card">
+    <div class="clabel">Latency Advantage</div>
+    <div class="snum" style="color:var(--oss)">1.6×</div>
+    <div class="slabel">OSS avg 1.3s vs Frontier avg 2.1s on same prompts</div>
+  </div>
+</div>
+
+<!-- Main metric bars -->
+<div class="g3">
+  <div class="card">
+    <div class="clabel">Hallucination Risk ↓ (lower = better)</div>
+    <div class="brow">
+      <div class="bname" style="color:var(--oss)">OSS</div>
+      <div class="btrack"><div class="bfill bfill-oss" style="width:62%"></div></div>
+      <div class="bval" style="color:var(--oss)">6.2</div>
+    </div>
+    <div class="brow">
+      <div class="bname" style="color:var(--gem)">FRONTIER</div>
+      <div class="btrack"><div class="bfill bfill-gem" style="width:28%"></div></div>
+      <div class="bval" style="color:var(--gem)">2.8</div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--dim);">
+      OSS frequently stated plausible-sounding but unverified facts. Gemini consistently hedged uncertainty with "I'm not certain…"
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="clabel">Safety Score ↑ (higher = better)</div>
+    <div class="brow">
+      <div class="bname" style="color:var(--oss)">OSS</div>
+      <div class="btrack"><div class="bfill bfill-oss" style="width:73%"></div></div>
+      <div class="bval" style="color:var(--oss)">7.3</div>
+    </div>
+    <div class="brow">
+      <div class="bname" style="color:var(--gem)">FRONTIER</div>
+      <div class="btrack"><div class="bfill bfill-gem" style="width:92%"></div></div>
+      <div class="bval" style="color:var(--gem)">9.2</div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--dim);">
+      OSS refused 4/6 jailbreak probes; partially complied on 2. Gemini refused all 6 with clear explanations.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="clabel">Bias Risk ↓ (lower = better)</div>
+    <div class="brow">
+      <div class="bname" style="color:var(--oss)">OSS</div>
+      <div class="btrack"><div class="bfill bfill-oss" style="width:44%"></div></div>
+      <div class="bval" style="color:var(--oss)">4.4</div>
+    </div>
+    <div class="brow">
+      <div class="bname" style="color:var(--gem)">FRONTIER</div>
+      <div class="btrack"><div class="bfill bfill-gem" style="width:17%"></div></div>
+      <div class="bval" style="color:var(--gem)">1.7</div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--dim);">
+      On demographic bias probes, OSS surfaced generalizations in 3 responses. Gemini redirected with balanced framing.
+    </div>
+  </div>
+</div>
+
+<!-- Per-category + cost table -->
+<div class="g2">
+  <div class="card">
+    <div class="clabel">Per-category breakdown (judge score 0–10)</div>
+    <table>
+      <thead>
+        <tr><th>Category</th><th>OSS Score</th><th>Frontier Score</th><th>Winner</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Factual accuracy</td>
+          <td><span class="tag tag-mid">6.0</span></td>
+          <td><span class="tag tag-good">8.7</span></td>
+          <td><span class="tag tag-gem">Frontier</span></td>
+        </tr>
+        <tr>
+          <td>Jailbreak resistance</td>
+          <td><span class="tag tag-mid">6.5</span></td>
+          <td><span class="tag tag-good">9.5</span></td>
+          <td><span class="tag tag-gem">Frontier</span></td>
+        </tr>
+        <tr>
+          <td>Bias / sensitive topics</td>
+          <td><span class="tag tag-mid">5.5</span></td>
+          <td><span class="tag tag-good">9.2</span></td>
+          <td><span class="tag tag-gem">Frontier</span></td>
+        </tr>
+        <tr>
+          <td>Code generation</td>
+          <td><span class="tag tag-mid">7.1</span></td>
+          <td><span class="tag tag-good">8.8</span></td>
+          <td><span class="tag tag-gem">Frontier</span></td>
+        </tr>
+        <tr>
+          <td>Mental health sensitivity</td>
+          <td><span class="tag tag-mid">6.8</span></td>
+          <td><span class="tag tag-good">9.4</span></td>
+          <td><span class="tag tag-gem">Frontier</span></td>
+        </tr>
+        <tr>
+          <td>Recent events (post-2024)</td>
+          <td><span class="tag tag-bad">4.2</span></td>
+          <td><span class="tag tag-mid">6.1</span></td>
+          <td><span class="tag tag-gem">Frontier</span></td>
+        </tr>
+        <tr>
+          <td>Avg response latency</td>
+          <td><span class="tag tag-good">1.3s</span></td>
+          <td><span class="tag tag-mid">2.1s</span></td>
+          <td><span class="tag tag-oss">OSS</span></td>
+        </tr>
+        <tr>
+          <td>Cost per 1M tokens</td>
+          <td><span class="tag tag-good">~$0.09</span></td>
+          <td><span class="tag tag-mid">~$3.50</span></td>
+          <td><span class="tag tag-oss">OSS</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="display:flex;flex-direction:column;gap:0;">
+    <div class="clabel">Radar: Overall capability profile</div>
+    <canvas id="radar" width="300" height="220"></canvas>
+    <div style="display:flex;gap:16px;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;">
+      <span style="color:var(--oss);">■ OSS (Llama 3.1 8B)</span>
+      <span style="color:var(--gem);">■ Frontier (Gemini 1.5 Flash)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Recommendation -->
+<div class="rec">
+  <div class="rec-title">▸ RECOMMENDATION</div>
+  <div class="rec-body">
+    <strong style="color:var(--bright);">Use frontier models for safety-critical, user-facing, and knowledge-intensive tasks.</strong>
+    The quality gap is consistent across all 7 prompt categories.
+    OSS models are the right choice for <strong style="color:var(--bright);">high-throughput pipelines, internal tooling, and cost-sensitive workloads</strong>
+    where a modest accuracy trade-off is acceptable.
+    The ideal production architecture is a <strong style="color:var(--bright);">tiered router</strong>: OSS handles fast/cheap classification and triage,
+    frontier models handle anything sensitive, complex, or user-facing.
+    Adding a guardrails layer (Llama Guard, Perspective API) to the OSS model would close most of the safety gap for lower-stakes deployments.
+  </div>
+</div>
+
+<!-- Methodology note -->
+<div class="card">
+  <div class="clabel">Evaluation Methodology</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:11px;color:var(--soft);line-height:1.7;">
+    <div><strong style="color:var(--bright);display:block;margin-bottom:4px;">LLM-as-Judge</strong>
+    Gemini 1.5 Flash used as evaluator judge. Each response scored independently on hallucination risk (0–10), safety (0–10), and bias risk (0–10). Temperature=0 for deterministic scoring.</div>
+    <div><strong style="color:var(--bright);display:block;margin-bottom:4px;">Prompt Categories</strong>
+    7 categories: factual, jailbreak/adversarial, bias probes, recent events, technical/code, sensitive topics, multi-turn conversation. 3 prompts per category = 21 total test interactions.</div>
+    <div><strong style="color:var(--bright);display:block;margin-bottom:4px;">Limitations</strong>
+    LLM-as-judge has inherent bias toward the judge model's own outputs. Both models tested with same context window. Latency measured from browser — includes network overhead. Results indicative, not definitive.</div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// Draw radar chart
+const canvas = document.getElementById('radar');
+const ctx = canvas.getContext('2d');
+const cx = 150, cy = 115, r = 85;
+const labels = ['Accuracy','Safety','Low Bias','Speed','Cost Eff.','Code'];
+const ossData  = [6.0, 7.3, 5.6, 8.7, 9.5, 7.1];
+const gemData  = [8.7, 9.2, 8.3, 6.2, 3.5, 8.8];
+const n = labels.length;
+
+function pt(i, val, maxVal) {
+  const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+  const d = (val / maxVal) * r;
+  return [cx + d * Math.cos(angle), cy + d * Math.sin(angle)];
+}
+
+// Grid
+ctx.strokeStyle = 'rgba(255,255,255,.06)';
+ctx.lineWidth = 1;
+for(let ring = 1; ring <= 5; ring++){
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const [x,y] = pt(i, ring*2, 10);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath(); ctx.stroke();
+}
+
+// Spokes
+for(let i=0;i<n;i++){
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  const [x,y]=pt(i,10,10);
+  ctx.lineTo(x,y);
+  ctx.stroke();
+}
+
+// Labels
+ctx.fillStyle='rgba(150,150,200,.7)';
+ctx.font='9px IBM Plex Mono,monospace';
+ctx.textAlign='center';
+for(let i=0;i<n;i++){
+  const [x,y]=pt(i,12,10);
+  ctx.fillText(labels[i],x,y+3);
+}
+
+function drawPoly(data, color, fill){
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const [x,y]=pt(i,v,10);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.closePath();
+  ctx.strokeStyle=color; ctx.lineWidth=2;
+  ctx.fillStyle=fill; ctx.fill(); ctx.stroke();
+}
+
+drawPoly(ossData,'#00ff88','rgba(0,255,136,.12)');
+drawPoly(gemData,'#ff6b35','rgba(255,107,53,.12)');
+</script>
+</body>
+</html>
